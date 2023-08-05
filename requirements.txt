@@ -1,0 +1,7 @@
+Pillow
+numpy
+scikit-image
+parse
+opencv_contrib_python
+imantics
+requests
