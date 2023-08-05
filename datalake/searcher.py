@@ -3,7 +3,8 @@ import sys
 
 
 class Searcher(object):
-    def __init__(self, api_key):
+    def __init__(self, email, api_key):
+        self.email = email
         self.api_key = api_key
 
     def limits(self):
