@@ -2,6 +2,10 @@ import os
 import sys
 import requests
 import json
+from PIL import Image
+from typing import List
+from .annotations import Annotation
+from .data_request import DataRequest
 
 
 class Searcher(object):
@@ -27,12 +31,25 @@ class Searcher(object):
     def limits(self):
         response = self.pierequest("/limits")
         if response.get("status") != "ok":
-            print(response.get("message"))
-            exit()
+            raise RuntimeError(response.get("message"))
+
+        return response.get("limits", {})
+
+    def recent_searches(self):
+        response = self.pierequest("/recent_")
+        if response.get("status") != "ok":
+            raise RuntimeError(response.get("message"))
+
         return response.get("limits", {})
 
     def search(self, query,
-               images,
-               annotations):
-        print(self.pierequest("/limits"))
+               images: List[Image.Image],
+               annotations: List[Annotation]):
+        response = self.pierequest("/search",
+                                   query=query,
+                                   annotations=[ann.to_dict()
+                                                for ann in annotations])
+        if response.get("status") != "ok":
+            raise RuntimeError(response.get("message"))
 
+        return DataRequest(response.get("request_id"))

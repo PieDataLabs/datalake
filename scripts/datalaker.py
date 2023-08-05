@@ -1,6 +1,8 @@
 import argparse
 from pathlib import Path
 from datalake import Searcher
+from datalake.annotations import Annotation, Tag, Polygon, Box
+from PIL import Image
 from datalake.credentials import load_credentials, save_credentials
 
 
@@ -20,23 +22,75 @@ def parse_args():
                                type=str,
                                action="append",
                                dest="annotations")
+    search_parser.add_argument("--tag",
+                               type=str,
+                               action="append",
+                               dest="tags")
+    search_parser.add_argument("--polygon",
+                               type=str,
+                               action="append",
+                               dest="polygons")
+    search_parser.add_argument("--box",
+                               type=str,
+                               action="append",
+                               dest="boxes")
 
     stats_parser = subparsers.add_parser("stats")
     stats_parser.add_argument("--limits", action="store_true")
+
+    host_parser = subparsers.add_parser("host")
+    host_parser.add_argument("image_path", type=Path)
+
+    license_parser = subparsers.add_parser("license")
 
     args = parser.parse_args()
     return args
 
 
-def run_search(query, images, annotations):
+def run_search(query, images,
+               annotations,
+               tags,
+               polygons,
+               boxes):
     credentials = load_credentials()
     if credentials is None:
         print("ERROR: credentials are invalid.\nUse `datalake auth` command first.\n")
         exit()
+
+    if images is None:
+        images = []
+    if annotations is None:
+        annotations = []
+    if tags is None:
+        tags = []
+    if polygons is None:
+        polygons = []
+    if boxes is None:
+        boxes = []
+
+    images = [Image.open(image_path).convert("RGB")
+              for image_path in images]
+    annotations = [Annotation.from_string(ann) for ann in annotations]
+    annotations.extend([Tag.from_string(tag) for tag in tags])
+    annotations.extend([Polygon.from_string(polygon)
+                        for polygon in polygons])
+    annotations.extend([Box.from_string(box)
+                        for box in boxes])
+
     searcher = Searcher(**credentials)
-    searcher.search(query,
-                    images=images,
-                    annotations=annotations)
+
+    print("Query:")
+    print(query)
+    print("Annotations:")
+    print(annotations)
+    print("Number of samples: ")
+    print(len(images))
+
+    data_request = searcher.search(query,
+                                   images=images,
+                                   annotations=annotations)
+    print("Data request: ")
+    print(data_request)
 
 
 def run_auth():
@@ -64,6 +118,14 @@ def run_stats(limits: bool = False):
         print(searcher.limits())
 
 
+def run_host(image_path: Path):
+    raise NotImplementedError()
+
+
+def run_license():
+    pass
+
+
 def main(command, **kwargs):
     if command == "search":
         run_search(**kwargs)
@@ -71,6 +133,10 @@ def main(command, **kwargs):
         run_auth(**kwargs)
     elif command == "stats":
         run_stats(**kwargs)
+    elif command == "host":
+        run_host(**kwargs)
+    elif command == "license":
+        run_license()
     else:
         raise NotImplementedError()
 
