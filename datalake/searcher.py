@@ -6,6 +6,7 @@ import io
 import base64
 from PIL import Image
 from typing import List
+from .limits import Limits
 from .annotations import Annotation
 from .data_request import DataRequest
 
@@ -44,7 +45,7 @@ class Searcher(object):
         if response.get("status") != "ok":
             raise RuntimeError(response.get("message"))
 
-        return response.get("limits", {})
+        return Limits(response.get("limits", {}))
 
     def recent_searches(self):
         response = self.pierequest("/recent_")
