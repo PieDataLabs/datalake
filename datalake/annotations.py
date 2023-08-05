@@ -58,6 +58,20 @@ class Annotation(object):
             "color": self.color,
         }
 
+    @staticmethod
+    def from_dict(d):
+        if 'type' not in d:
+            raise RuntimeError(f"Invalid dict: {d}")
+        dtype = d.pop('type')
+        if 'id' in d:
+            d.pop("id")
+        if dtype == "Tag":
+            return Tag(d["name"])
+        elif dtype == "Polygon":
+            return Polygon(**d)
+        elif dtype == "Box":
+            return Box(**d)
+
     def __repr__(self):
         return self.to_string()
 
