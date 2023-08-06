@@ -71,6 +71,10 @@ class Annotation(object):
             return Polygon(**d)
         elif dtype == "Box":
             return Box(**d)
+        elif dtype == "Text":
+            return Text(d["name"] == "detailed")
+        else:
+            raise NotImplementedError()
 
     def __repr__(self):
         return self.to_string()
@@ -87,6 +91,28 @@ class Tag(Annotation):
 
     def to_string(self):
         return f"Tag[{self.name}]"
+
+
+class Text(Annotation):
+    def __init__(self, detailed=False):
+        super(Text, self).__init__("detailed" if detailed else "common",
+                                   "#FFFFFF")
+
+    @staticmethod
+    def from_string(s):
+        s = s.lower()
+        if s == "detailed":
+            return Text(detailed=True)
+        elif s == "common":
+            return Text(detailed=False)
+        else:
+            raise NotImplementedError()
+
+    def to_string(self):
+        if self.name == "detailed":
+            return f"Text[detailed]"
+        else:
+            return "Text[common]"
 
 
 class Polygon(Annotation):

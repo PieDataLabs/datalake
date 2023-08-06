@@ -5,7 +5,7 @@ import json
 from pathlib import Path
 from time import time
 from datalake import Searcher
-from datalake.annotations import Annotation, Tag, Polygon, Box
+from datalake.annotations import Annotation, Tag, Polygon, Box, Text
 from PIL import Image
 from datalake.credentials import load_credentials, save_credentials
 
@@ -45,6 +45,10 @@ def parse_args():
                                type=str,
                                action="append",
                                dest="boxes")
+    search_parser.add_argument("--text",
+                               choices=["detailed", "common"],
+                               type=str,
+                               required=False)
     search_parser.add_argument("--output_format",
                                default="$query.json")
 
@@ -65,6 +69,7 @@ def run_search(query, images,
                tags,
                polygons,
                boxes,
+               text,
                output_format):
     credentials = load_credentials()
     if credentials is None:
@@ -81,6 +86,10 @@ def run_search(query, images,
         polygons = []
     if boxes is None:
         boxes = []
+    if text is not None:
+        text_annotations = [Text.from_string(text)]
+    else:
+        text_annotations = []
 
     images = [Image.open(image_path).convert("RGB")
               for image_path in images]
@@ -90,6 +99,7 @@ def run_search(query, images,
                         for polygon in polygons])
     annotations.extend([Box.from_string(box)
                         for box in boxes])
+    annotations.extend(text_annotations)
 
     searcher = Searcher(**credentials)
 
