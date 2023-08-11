@@ -23,15 +23,39 @@ View results in a file: `Rabbits.json`
 
 
 ## Python api  
-
+  
+### Simple search by text, annotations and images  
+  
 ```python
 from datalake.searcher import Searcher
+from datalake.credentials import load_credentials
 from datalake.annotations import Tag, Polygon
+
+credentials = load_credentials()
+searcher = Searcher(**credentials)
 
 data_request = searcher.search("Rabbits",
                                annotations=[Tag("rabbit")],
-                               search_limit=10)
+                               search_limit=9)
 
 print(data_request.wait())
 ```
+  
+### Search by embedding  
+  
+```python
+import numpy as np
+from datalake.searcher import Searcher
+from datalake.credentials import load_credentials
+from datalake.annotations import Tag, Polygon
 
+credentials = load_credentials()
+searcher = Searcher(**credentials)
+
+embedding = np.random.randn(512)
+data_request = searcher.deepsearch(embedding,
+                                   annotations=[Tag("rabbit")],
+                                   search_limit=9)
+
+print(data_request.wait())
+```
