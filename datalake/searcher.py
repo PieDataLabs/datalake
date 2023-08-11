@@ -7,6 +7,7 @@ import base64
 from urllib.request import urlopen
 from PIL import Image
 from typing import List
+import numpy as np
 from .limits import Limits
 from .annotations import Annotation
 from .data_request import DataRequest
@@ -85,11 +86,32 @@ class Searcher(object):
     def search(self, query,
                images: List[Image.Image],
                annotations: List[Annotation],
-               search_limit=10):
+               search_limit=9):
+
+        if search_limit >= 10:
+            raise NotImplementedError("Now free search limit is 10 photos")
+
         response = self.pierequest("/search",
                                    query=query,
                                    images=[to_base64(im)
                                            for im in images],
+                                   annotations=[ann.to_dict()
+                                                for ann in annotations],
+                                   search_limit=search_limit)
+        if response.get("status") != "ok":
+            raise RuntimeError(response.get("message"))
+
+        return DataRequest(self, response.get("request_id"))
+
+    def deepsearch(self, embedding: np.ndarray,
+                   annotations: List[Annotation],
+                   search_limit=9):
+
+        if search_limit >= 10:
+            raise NotImplementedError("Now free search limit is 10 photos")
+
+        response = self.pierequest("/deepsearch",
+                                   embedding=embedding.tolist(),
                                    annotations=[ann.to_dict()
                                                 for ann in annotations],
                                    search_limit=search_limit)
