@@ -11,6 +11,7 @@ import numpy as np
 from .limits import Limits
 from .annotations import Annotation
 from .data_request import DataRequest
+from .settings import FEATURE_DIMENSION
 
 
 def to_base64(im: Image.Image):
@@ -106,6 +107,9 @@ class Searcher(object):
     def deepsearch(self, embedding: np.ndarray,
                    annotations: List[Annotation],
                    search_limit=9):
+
+        if embedding.shape != (FEATURE_DIMENSION, ):
+            raise RuntimeError("Bad embedding shape")
 
         if search_limit >= 10:
             raise NotImplementedError("Now free search limit is 10 photos")

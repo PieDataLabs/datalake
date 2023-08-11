@@ -2,6 +2,7 @@
 
 import argparse
 import json
+import numpy as np
 from pathlib import Path
 from time import time
 from datalake import Searcher
@@ -29,6 +30,8 @@ def parse_args():
                                type=Path,
                                action="append",
                                dest="images")
+    search_parser.add_argument("--embedding",
+                               action="store_true")
     search_parser.add_argument("--annotation",
                                type=str,
                                action="append",
@@ -65,6 +68,7 @@ def parse_args():
 
 
 def run_search(query, images,
+               embedding,
                annotations,
                tags,
                polygons,
@@ -75,6 +79,7 @@ def run_search(query, images,
     if credentials is None:
         print("ERROR: credentials are invalid.\nUse `datalake auth` command first.\n")
         exit()
+    searcher = Searcher(**credentials)
 
     if images is None:
         images = []
@@ -91,8 +96,17 @@ def run_search(query, images,
     else:
         text_annotations = []
 
-    images = [Image.open(image_path).convert("RGB")
-              for image_path in images]
+    perform_embedding_search = False
+    if embedding:
+        perform_embedding_search = True
+        embedding = np.load(query)
+        if len(images) > 0:
+            print("WARNING: images will be muted while embedding search")
+            images = []
+    else:
+        images = [Image.open(image_path).convert("RGB")
+                  for image_path in images]
+
     annotations = [Annotation.from_string(ann) for ann in annotations]
     annotations.extend([Tag.from_string(tag) for tag in tags])
     annotations.extend([Polygon.from_string(polygon)
@@ -101,8 +115,6 @@ def run_search(query, images,
                         for box in boxes])
     annotations.extend(text_annotations)
 
-    searcher = Searcher(**credentials)
-
     print("Query:")
     print(query)
     print("Annotations:")
@@ -110,11 +122,16 @@ def run_search(query, images,
     print("Number of samples: ")
     print(len(images))
 
-    search_limit = 10
-    data_request = searcher.search(query,
-                                   images=images,
-                                   annotations=annotations,
-                                   search_limit=search_limit)
+    search_limit = 9
+    if perform_embedding_search:
+        data_request = searcher.deepsearch(embedding,
+                                           annotations=annotations,
+                                           search_limit=search_limit)
+    else:
+        data_request = searcher.search(query,
+                                       images=images,
+                                       annotations=annotations,
+                                       search_limit=search_limit)
     print("Data request: ")
     print(data_request)
     t_start = time()
