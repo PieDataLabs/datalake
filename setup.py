@@ -9,7 +9,7 @@ with open('requirements.txt', 'r') as f:
 
 setup(
     name='piedatalake',
-    version='1.0.0',
+    version='1.0.1',
     python_requires=f'>=3.6,<3.9',
     description='Datalake search engine',
     url='https://github.com/PieDataLabs/datalake',
