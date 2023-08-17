@@ -24,3 +24,6 @@ class DataRequest(object):
                 return data
             wait_time *= 1.01
             sleep(wait_time)
+
+    def similar(self, data_ids):
+        pass
