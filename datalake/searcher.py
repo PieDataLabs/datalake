@@ -85,9 +85,13 @@ class Searcher(object):
         return response.get("data", [])
 
     def search(self, query,
-               images: List[Image.Image],
-               annotations: List[Annotation],
-               search_limit=9):
+               images: List[Image.Image] = None,
+               annotations: List[Annotation] = None,
+               search_limit=9) -> DataRequest:
+        if images is None:
+            images = []
+        if annotations is None:
+            annotations = []
 
         if search_limit >= 10:
             raise NotImplementedError("Now free search limit is 10 photos")
@@ -104,9 +108,29 @@ class Searcher(object):
 
         return DataRequest(self, response.get("request_id"))
 
+    def search_similar(self,
+                       request_id,
+                       data_ids: List[int] = None,
+                       search_limit=9) -> DataRequest:
+
+        if data_ids is None:
+            data_ids = []
+
+        response = self.pierequest("/search_similar",
+                                   request_id=request_id,
+                                   data_ids=data_ids,
+                                   search_limit=search_limit)
+        if response.get("status") != "ok":
+            raise RuntimeError(response.get("message"))
+
+        return DataRequest(self, response.get("request_id"))
+
     def deepsearch(self, embedding: np.ndarray,
-                   annotations: List[Annotation],
+                   annotations: List[Annotation] = None,
                    search_limit=9):
+
+        if annotations is None:
+            annotations = []
 
         if embedding.shape != (FEATURE_DIMENSION, ):
             raise RuntimeError("Bad embedding shape")

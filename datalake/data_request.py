@@ -25,5 +25,8 @@ class DataRequest(object):
             wait_time *= 1.01
             sleep(wait_time)
 
-    def similar(self, data_ids):
-        pass
+    def similar(self, data_ids,
+                search_limit=9) -> 'DataRequest':
+        return self.searcher.search_similar(self.request_id,
+                                            data_ids,
+                                            search_limit=search_limit)
