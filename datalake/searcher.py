@@ -11,6 +11,7 @@ import numpy as np
 from .limits import Limits
 from .annotations import Annotation
 from .data_request import DataRequest
+from .dataset import Dataset
 from .settings import FEATURE_DIMENSION
 
 
@@ -147,3 +148,32 @@ class Searcher(object):
             raise RuntimeError(response.get("message"))
 
         return DataRequest(self, response.get("request_id"))
+
+    def dataset_list(self):
+        response = self.pierequest("/dataset_list")
+        if response.get("status") != "ok":
+            raise RuntimeError(response.get("message"))
+
+        return [Dataset(self, dataset_id)
+                for dataset_id in response.get("datasets", [])]
+
+    def dataset_info(self, dataset_id):
+        response = self.pierequest("/dataset_info",
+                                   dataset_id=dataset_id)
+        if response.get("status") != "ok":
+            raise RuntimeError(response.get("message"))
+
+        return response
+
+    def dataset_add(self, dataset_id: str,
+                    request_id: str,
+                    data_ids: List[int]):
+        response = self.pierequest("/add_to_dataset",
+                                   dataset_id=dataset_id,
+                                   request_id=request_id,
+                                   data_ids=data_ids)
+
+        if response.get("status") != "ok":
+            raise RuntimeError(response.get("message"))
+
+        return response
