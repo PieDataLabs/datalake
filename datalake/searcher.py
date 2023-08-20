@@ -25,8 +25,11 @@ def to_base64(im: Image.Image):
 
 
 def from_url(image_url: str):
-    with urlopen(image_url) as url:
-        return Image.open(url).convert("RGB")
+    image_url = image_url.split('?')[0]
+    print(image_url)
+    r = requests.get(image_url, stream=True)
+    if r.status_code == 200:
+        return Image.open(io.BytesIO(r.content)).convert("RGB")
 
 
 class Searcher(object):

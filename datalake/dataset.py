@@ -30,3 +30,19 @@ class Dataset(object):
     def __repr__(self):
         info = self.searcher.dataset_info(self.dataset_id)
         return f"Dataset#{info['keyname']}(images={info['images_count']}, annotations={info['annotations_count']})"
+
+    def add_image(self,
+                  image_url,
+                  annotations: List = None):
+        if annotations is None:
+            annotations = []
+
+        response = self.searcher.pierequest("/add_image_to_dataset",
+                                            dataset_id=self.dataset_id,
+                                            image_url=image_url,
+                                            annotations=annotations)
+        if response.get("status") != "ok":
+            raise RuntimeError(response.get("message"))
+
+    def remove_image(self, image_url):
+        pass
