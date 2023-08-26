@@ -1,10 +1,5 @@
-import os
-import sys
 import requests
 import json
-import io
-import base64
-from urllib.request import urlopen
 from PIL import Image
 from typing import List
 import numpy as np
@@ -13,23 +8,7 @@ from .annotations import Annotation
 from .data_request import DataRequest
 from .dataset import Dataset
 from .settings import FEATURE_DIMENSION
-
-
-def to_base64(im: Image.Image):
-    file_object = io.BytesIO()
-    im.save(file_object, 'JPEG')
-    file_object.seek(0)
-    b64 = base64.b64encode(file_object.read()).decode('utf-8')
-    src = f"data:image/jpeg;charset=utf-8;base64, {b64}"
-    return src
-
-
-def from_url(image_url: str):
-    image_url = image_url.split('?')[0]
-    print(image_url)
-    r = requests.get(image_url, stream=True)
-    if r.status_code == 200:
-        return Image.open(io.BytesIO(r.content)).convert("RGB")
+from .utils import to_base64, from_url
 
 
 class Searcher(object):
@@ -182,4 +161,4 @@ class Searcher(object):
         return response
 
     def get_embedding(self, image_url):
-        pass
+        raise NotImplementedError()
