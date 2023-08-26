@@ -57,6 +57,14 @@ class Dataset(object):
         if response.get("status") != "ok":
             raise RuntimeError(response.get("message"))
 
+    def retrieve(self, page=0):
+        response = self.searcher.pierequest("/retrieve_from_dataset",
+                                            dataset_id=self.dataset_id,
+                                            page=page)
+        if response.get("status") != "ok":
+            raise RuntimeError(response.get("message"))
+        return response.get("data", [])
+
     def export(self, format=None):
         raise NotImplementedError()
 
