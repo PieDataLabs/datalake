@@ -45,4 +45,8 @@ class Dataset(object):
             raise RuntimeError(response.get("message"))
 
     def remove_image(self, image_url):
-        pass
+        response = self.searcher.pierequest("/remove_image_from_dataset",
+                                            dataset_id=self.dataset_id,
+                                            image_url=image_url)
+        if response.get("status") != "ok":
+            raise RuntimeError(response.get("message"))

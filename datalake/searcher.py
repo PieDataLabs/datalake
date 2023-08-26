@@ -180,3 +180,6 @@ class Searcher(object):
             raise RuntimeError(response.get("message"))
 
         return response
+
+    def get_embedding(self, image_url):
+        pass
