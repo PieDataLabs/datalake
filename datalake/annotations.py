@@ -174,6 +174,69 @@ class ImageWithAnnotations(object):
         self.annotations = annotations
 
     @staticmethod
+    def annotation_from_dict(d, size):
+        pietype = d.pop('type')
+        if 'box' in d:
+            d['bbox'] = BBox.create(np.int32(np.array(d.pop('bbox')) * np.array([size[0], size[1]] * 2)),
+                                    style=BBox.MIN_MAX)
+        if 'segmentation' in d:
+            polygons = [np.int32(poly.reshape([-1, 2]) * np.array([[size[0], size[1]]]))
+                        for poly in d.pop('segmentation')]
+            d["polygons"] = Polygons.create(polygons)
+        d["category"] = Category(d.pop('name'), color=d.pop('color'))
+        return Annotation(**d,
+                          id=None,
+                          width=size[0],
+                          height=size[1],
+                          metadata={
+                              "pietype": pietype
+                          })
+
+    @staticmethod
+    def annotation_to_dict(annotation: Annotation):
+        pietype = annotation.metadata.get('pietype')
+        if pietype is None:
+            raise NotImplementedError("Please provide type of Annotation")
+        if pietype == "Text":
+            text = annotation.category.name
+            return {
+                "type": "Text",
+                "name": text,
+            }
+        elif pietype == "Tag":
+            tag = annotation.category.name
+            return {
+                "type": "Tag",
+                "name": tag,
+            }
+        elif pietype == "Polygon":
+
+            box = np.array(list(annotation.bbox.top_left + annotation.bbox.bottom_right), dtype=np.float32)
+            box /= np.array(np.repeat(annotation.size, 2), dtype=np.float32)
+
+            segmentation = [(poly / np.repeat(annotation.size, poly.shape[0] // 2)).tolist()
+                            for poly in annotation.polygons]
+
+            return {
+                "type": "Polygon",
+                "name": annotation.category.name,
+                "color": annotation.color.hex,
+                "box": box.tolist(),
+                "segmentation": segmentation
+            }
+        elif pietype == "Box":
+            box = np.array(list(annotation.bbox.top_left + annotation.bbox.bottom_right), dtype=np.float32)
+            box /= np.array(list(annotation.size + annotation.size), dtype=np.float32)
+            return {
+                "type": "Box",
+                "name": annotation.category.name,
+                "color": annotation.color.hex,
+                "box": box.tolist(),
+            }
+        else:
+            raise NotImplementedError("No such pietype")
+
+    @staticmethod
     def from_dict(d):
         image_url = d["image_url"]
 
@@ -181,19 +244,8 @@ class ImageWithAnnotations(object):
         if image is None:
             return ImageWithAnnotations(image_url=image_url)
 
-        def create_annotation(size, d):
-            if 'box' in d:
-                d['bbox'] = BBox.create(np.int32(np.array(d.pop('bbox')) * np.array([size[0], size[1]] * 2)),
-                                        style=BBox.MIN_MAX)
-            if 'segmentation' in d:
-                polygons = [np.int32(poly.reshape([-1, 2]) * np.array([[size[0], size[1]]]))
-                            for poly in d.pop('segmentation')]
-                d["polygons"] = Polygons.create(polygons)
-            d["category"] = Category(d.pop('name'), color=d.pop('color'))
-            return Annotation(**d, id=None)
-
         return ImageWithAnnotations(image,
-                                    [create_annotation(image.size, ann)
+                                    [ImageWithAnnotations.annotation_from_dict(ann, image.size)
                                      for ann in d["annotations"]],
                                     image_url=image_url)
 
