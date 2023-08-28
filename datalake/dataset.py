@@ -4,7 +4,7 @@ from PIL import Image
 import numpy as np
 
 from .data_request import DataRequest
-from .annotations import Annotation
+from .annotations import AnnotationSearch
 from .settings import FEATURE_DIMENSION
 from .utils import to_base64
 
@@ -39,7 +39,8 @@ class Dataset(object):
 
     def add_image(self,
                   image_url,
-                  annotations: List = None):
+                  annotations=None):
+
         if annotations is None:
             annotations = []
 
@@ -70,7 +71,7 @@ class Dataset(object):
 
     def search(self, query,
                images: List[Image.Image] = None,
-               annotations: List[Annotation] = None,
+               annotations: List[AnnotationSearch] = None,
                search_limit=9) -> DataRequest:
         if images is None:
             images = []
@@ -94,7 +95,7 @@ class Dataset(object):
         return DataRequest(self, response.get("request_id"))
 
     def deepsearch(self, embedding: np.ndarray,
-                   annotations: List[Annotation] = None,
+                   annotations: List[AnnotationSearch] = None,
                    search_limit=9):
 
         if annotations is None:

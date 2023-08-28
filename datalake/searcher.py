@@ -4,7 +4,7 @@ from PIL import Image
 from typing import List
 import numpy as np
 from .limits import Limits
-from .annotations import Annotation
+from .annotations import AnnotationSearch
 from .data_request import DataRequest
 from .dataset import Dataset
 from .settings import FEATURE_DIMENSION
@@ -56,7 +56,7 @@ class Searcher(object):
             "query": response.get('query'),
             "images": [from_url(image_url)
                        for image_url in response.get("images")],
-            "annotations": [Annotation.from_dict(ann)
+            "annotations": [AnnotationSearch.from_dict(ann)
                             for ann in response.get('annotations', [])]
         }
 
@@ -69,7 +69,7 @@ class Searcher(object):
 
     def search(self, query,
                images: List[Image.Image] = None,
-               annotations: List[Annotation] = None,
+               annotations: List[AnnotationSearch] = None,
                search_limit=9) -> DataRequest:
         if images is None:
             images = []
@@ -109,8 +109,8 @@ class Searcher(object):
         return DataRequest(self, response.get("request_id"))
 
     def deepsearch(self, embedding: np.ndarray,
-                   annotations: List[Annotation] = None,
-                   search_limit=9):
+                   annotations: List[AnnotationSearch] = None,
+                   search_limit=9) -> DataRequest:
 
         if annotations is None:
             annotations = []

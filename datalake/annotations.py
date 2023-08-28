@@ -1,11 +1,13 @@
 import re
-
+from imantics import Annotation, BBox, Mask, Polygons, Category
 from parse import parse
+import numpy as np
+from .utils import from_url
 
 
-class Annotation(object):
+class AnnotationSearch(object):
     def __init__(self, name, color):
-        super(Annotation, self).__init__()
+        super(AnnotationSearch, self).__init__()
         if not self.check_hex_color(color):
             raise RuntimeError(f"Expected hex color in format #FFFFFF, found: {color}")
         self.name = name
@@ -22,29 +24,36 @@ class Annotation(object):
         return True
 
     @staticmethod
-    def from_string(s: str) -> 'Annotation':
+    def from_string(s: str) -> 'AnnotationSearch':
         s = s.lower()
-        if s.startswith("tag"):
+        if s.startswith("tagsearch"):
             try:
-                name = parse("tag[{}]", s).fixed[0]
+                name = parse("tagsearch[{}]", s).fixed[0]
             except:
-                raise RuntimeError(f"Expected tag[name] found: {s}")
+                raise RuntimeError(f"Expected tagsearch[name] found: {s}")
 
-            return Tag(name)
-        elif s.startswith("polygon"):
+            return TagSearch(name)
+        elif s.startswith("polygonssearch"):
             try:
-                name, color = parse("polygon[{},{}]", s).fixed
+                name, color = parse("polygonssearch[{},{}]", s).fixed
             except:
-                raise RuntimeError(f"Expected polygon[name,hexcolor] found: {s}")
+                raise RuntimeError(f"Expected polygonssearch[name,hexcolor] found: {s}")
 
-            return Polygon(name, color=color)
-        elif s.startswith("box"):
+            return PolygonsSearch(name, color=color)
+        elif s.startswith("bboxsearch"):
             try:
-                name, color = parse("box[{},{}]", s).fixed
+                name, color = parse("bboxsearch[{},{}]", s).fixed
             except:
-                raise RuntimeError(f"Expected box[name,hexcolor] found: {s}")
+                raise RuntimeError(f"Expected bboxsearch[name,hexcolor] found: {s}")
 
-            return Box(name, color=color)
+            return BBoxSearch(name, color=color)
+        elif s.startswith("textsearch"):
+            try:
+                name, color = parse("textsearch[{},{}]", s).fixed
+            except:
+                raise RuntimeError(f"Expected textsearch[query] found: {s}")
+
+            return TextSearch(name)
         else:
             raise NotImplementedError()
 
@@ -53,7 +62,7 @@ class Annotation(object):
 
     def to_dict(self):
         return {
-            "type": self.__class__.__name__,
+            "type": ANNOTATION_MAPPING[self.__class__],
             "name": self.name,
             "color": self.color,
         }
@@ -66,13 +75,13 @@ class Annotation(object):
         if 'id' in d:
             d.pop("id")
         if dtype == "Tag":
-            return Tag(d["name"])
+            return TagSearch(d["name"])
         elif dtype == "Polygon":
-            return Polygon(**d)
+            return PolygonsSearch(**d)
         elif dtype == "Box":
-            return Box(**d)
+            return BBoxSearch(**d)
         elif dtype == "Text":
-            return Text(d["name"] == "detailed")
+            return TextSearch(d["name"])
         else:
             raise NotImplementedError()
 
@@ -80,44 +89,36 @@ class Annotation(object):
         return self.to_string()
 
 
-class Tag(Annotation):
+class TagSearch(AnnotationSearch):
     def __init__(self, name):
-        super(Tag, self).__init__(name, "#FFFFFF")
+        super(TagSearch, self).__init__(name, "#FFFFFF")
 
     @staticmethod
     def from_string(s):
         s = s.lower()
-        return Tag(s)
+        return TagSearch(s)
 
     def to_string(self):
-        return f"Tag[{self.name}]"
+        return f"TagSearch[{self.name}]"
 
 
-class Text(Annotation):
-    def __init__(self, detailed=False):
-        super(Text, self).__init__("detailed" if detailed else "common",
-                                   "#FFFFFF")
+class TextSearch(AnnotationSearch):
+    def __init__(self, query):
+        super(TextSearch, self).__init__(query,
+                                         "#FFFFFF")
 
     @staticmethod
     def from_string(s):
         s = s.lower()
-        if s == "detailed":
-            return Text(detailed=True)
-        elif s == "common":
-            return Text(detailed=False)
-        else:
-            raise NotImplementedError()
+        return TextSearch(s)
 
     def to_string(self):
-        if self.name == "detailed":
-            return f"Text[detailed]"
-        else:
-            return "Text[common]"
+        return f"TextSearch[{self.name}]"
 
 
-class Polygon(Annotation):
+class PolygonsSearch(AnnotationSearch):
     def __init__(self, name, color):
-        super(Polygon, self).__init__(name, color)
+        super(PolygonsSearch, self).__init__(name, color)
 
     @staticmethod
     def from_string(s):
@@ -127,15 +128,15 @@ class Polygon(Annotation):
         except:
             raise RuntimeError(f"Expected name,hexcolor found: {s}")
 
-        return Polygon(name, color=color)
+        return PolygonsSearch(name, color=color)
 
     def to_string(self):
-        return f"Polygon[{self.name},{self.color}]"
+        return f"PolygonsSearch[{self.name},{self.color}]"
 
 
-class Box(Annotation):
+class BBoxSearch(AnnotationSearch):
     def __init__(self, name, color):
-        super(Box, self).__init__(name, color)
+        super(BBoxSearch, self).__init__(name, color)
 
     @staticmethod
     def from_string(s):
@@ -145,7 +146,61 @@ class Box(Annotation):
         except:
             raise RuntimeError(f"Expected name,hexcolor found: {s}")
 
-        return Box(name, color=color)
+        return BBoxSearch(name, color=color)
 
     def to_string(self):
-        return f"Box[{self.name},{self.color}]"
+        return f"BBoxSearch[{self.name},{self.color}]"
+
+
+ANNOTATION_MAPPING = {
+    BBoxSearch: "Box",
+    PolygonsSearch: "Polygon",
+    TextSearch: "Text",
+    TagSearch: "Tag",
+    AnnotationSearch: "None",
+}
+
+
+class ImageWithAnnotations(object):
+    def __init__(self, image=None,
+                 annotations=None,
+                 image_url=None):
+        super(ImageWithAnnotations, self).__init__()
+        if annotations is None:
+            annotations = []
+
+        self.image = image
+        self.image_url = image_url
+        self.annotations = annotations
+
+    @staticmethod
+    def from_dict(d):
+        image_url = d["image_url"]
+
+        image = from_url(image_url)
+        if image is None:
+            return ImageWithAnnotations(image_url=image_url)
+
+        def create_annotation(size, d):
+            if 'box' in d:
+                d['bbox'] = BBox.create(np.int32(np.array(d.pop('bbox')) * np.array([size[0], size[1]] * 2)),
+                                        style=BBox.MIN_MAX)
+            if 'segmentation' in d:
+                polygons = [np.int32(poly.reshape([-1, 2]) * np.array([[size[0], size[1]]]))
+                            for poly in d.pop('segmentation')]
+                d["polygons"] = Polygons.create(polygons)
+            d["category"] = Category(d.pop('name'), color=d.pop('color'))
+            return Annotation(**d, id=None)
+
+        return ImageWithAnnotations(image,
+                                    [create_annotation(image.size, ann)
+                                     for ann in d["annotations"]],
+                                    image_url=image_url)
+
+
+__all__ = ["AnnotationSearch",
+           "BBoxSearch",
+           "PolygonsSearch",
+           "TextSearch",
+           "TagSearch",
+           "ImageWithAnnotations"]

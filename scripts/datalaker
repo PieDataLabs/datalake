@@ -6,7 +6,7 @@ import numpy as np
 from pathlib import Path
 from time import time
 from datalake import Searcher
-from datalake.annotations import Annotation, Tag, Polygon, Box, Text
+from datalake.annotations import AnnotationSearch, TagSearch, PolygonsSearch, BBoxSearch, TextSearch
 from PIL import Image
 from datalake.credentials import load_credentials, save_credentials
 
@@ -92,7 +92,7 @@ def run_search(query, images,
     if boxes is None:
         boxes = []
     if text is not None:
-        text_annotations = [Text.from_string(text)]
+        text_annotations = [TextSearch.from_string(text)]
     else:
         text_annotations = []
 
@@ -107,11 +107,11 @@ def run_search(query, images,
         images = [Image.open(image_path).convert("RGB")
                   for image_path in images]
 
-    annotations = [Annotation.from_string(ann) for ann in annotations]
-    annotations.extend([Tag.from_string(tag) for tag in tags])
-    annotations.extend([Polygon.from_string(polygon)
+    annotations = [AnnotationSearch.from_string(ann) for ann in annotations]
+    annotations.extend([TagSearch.from_string(tag) for tag in tags])
+    annotations.extend([PolygonsSearch.from_string(polygon)
                         for polygon in polygons])
-    annotations.extend([Box.from_string(box)
+    annotations.extend([BBoxSearch.from_string(box)
                         for box in boxes])
     annotations.extend(text_annotations)
 

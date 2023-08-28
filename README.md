@@ -29,13 +29,13 @@ View results in a file: `Rabbits.json`
 ```python
 from datalake.searcher import Searcher
 from datalake.credentials import load_credentials
-from datalake.annotations import Tag, Polygon
+from datalake.annotations import TagSearch, PolygonsSearch
 
 credentials = load_credentials()
 searcher = Searcher(**credentials)
 
 data_request = searcher.search("Rabbits",
-                               annotations=[Tag("rabbit")],
+                               annotations=[TagSearch("rabbit")],
                                search_limit=9)
 
 print(data_request.wait())
@@ -47,14 +47,14 @@ print(data_request.wait())
 import numpy as np
 from datalake.searcher import Searcher
 from datalake.credentials import load_credentials
-from datalake.annotations import Tag, Polygon
+from datalake.annotations import TagSearch, PolygonsSearch
 
 credentials = load_credentials()
 searcher = Searcher(**credentials)
 
 embedding = np.random.randn(512)
 data_request = searcher.deepsearch(embedding,
-                                   annotations=[Tag("rabbit")],
+                                   annotations=[TagSearch("rabbit")],
                                    search_limit=9)
 
 print(data_request.wait())
