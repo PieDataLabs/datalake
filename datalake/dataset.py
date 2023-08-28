@@ -1,10 +1,11 @@
 import os
-from typing import List
+from typing import List, Union
 from PIL import Image
 import numpy as np
+from imantics import Annotation
 
 from .data_request import DataRequest
-from .annotations import AnnotationSearch
+from .annotations import AnnotationSearch, ImageWithAnnotations
 from .settings import FEATURE_DIMENSION
 from .utils import to_base64
 
@@ -38,15 +39,18 @@ class Dataset(object):
         return f"Dataset#{info['keyname']}(images={info['images_count']}, annotations={info['annotations_count']}, public={info['public']})"
 
     def add_image(self,
-                  image_url,
+                  image_or_image_url: Union[str, Image.Image],
                   annotations=None):
 
         if annotations is None:
             annotations = []
+        annotations = [ImageWithAnnotations.annotation_to_dict(ann)
+                       if isinstance(ann, Annotation) else ann
+                       for ann in annotations]
 
         response = self.searcher.pierequest("/add_image_to_dataset",
                                             dataset_id=self.dataset_id,
-                                            image_url=image_url,
+                                            **(dict(image=to_base64(image_or_image_url)) if isinstance(image_or_image_url, Image.Image) else dict(image_url=image_or_image_url)),
                                             annotations=annotations)
         if response.get("status") != "ok":
             raise RuntimeError(response.get("message"))
