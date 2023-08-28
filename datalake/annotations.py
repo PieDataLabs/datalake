@@ -249,6 +249,10 @@ class ImageWithAnnotations(object):
                                      for ann in d["annotations"]],
                                     image_url=image_url)
 
+    def to_dict(self):
+        return {"image_url": self.image_url, "score": 1., "annotations": [self.annotation_to_dict(ann)
+                                                                          for ann in self.annotations]}
+
 
 __all__ = ["AnnotationSearch",
            "BBoxSearch",
