@@ -139,6 +139,14 @@ class Searcher(object):
         return [Dataset(self, dataset_id)
                 for dataset_id in response.get("datasets", [])]
 
+    def dataset_shared_list(self):
+        response = self.pierequest("/dataset_shared_list")
+        if response.get("status") != "ok":
+            raise RuntimeError(response.get("message"))
+
+        return [Dataset(self, dataset_id)
+                for dataset_id in response.get("datasets", [])]
+
     def dataset_info(self, dataset_id):
         response = self.pierequest("/dataset_info",
                                    dataset_id=dataset_id)
