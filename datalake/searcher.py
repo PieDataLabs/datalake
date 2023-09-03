@@ -70,7 +70,7 @@ class Searcher(object):
     def search(self, query,
                images: List[Image.Image] = None,
                annotations: List[AnnotationSearch] = None,
-               search_limit=9) -> DataRequest:
+               search_limit=10) -> DataRequest:
         if images is None:
             images = []
         if annotations is None:
@@ -85,7 +85,7 @@ class Searcher(object):
                                            for im in images],
                                    annotations=[ann.to_dict()
                                                 for ann in annotations],
-                                   search_limit=search_limit)
+                                   knum=search_limit)
         if response.get("status") != "ok":
             raise RuntimeError(response.get("message"))
 
@@ -94,7 +94,7 @@ class Searcher(object):
     def search_similar(self,
                        request_id,
                        data_ids: List[int] = None,
-                       search_limit=9) -> DataRequest:
+                       search_limit=10) -> DataRequest:
 
         if data_ids is None:
             data_ids = []
@@ -102,7 +102,7 @@ class Searcher(object):
         response = self.pierequest("/search_similar",
                                    request_id=request_id,
                                    data_ids=data_ids,
-                                   search_limit=search_limit)
+                                   knum=search_limit)
         if response.get("status") != "ok":
             raise RuntimeError(response.get("message"))
 
@@ -110,7 +110,7 @@ class Searcher(object):
 
     def deepsearch(self, embedding: np.ndarray,
                    annotations: List[AnnotationSearch] = None,
-                   search_limit=9) -> DataRequest:
+                   search_limit=10) -> DataRequest:
 
         if annotations is None:
             annotations = []
@@ -125,7 +125,7 @@ class Searcher(object):
                                    embedding=embedding.tolist(),
                                    annotations=[ann.to_dict()
                                                 for ann in annotations],
-                                   search_limit=search_limit)
+                                   knum=search_limit)
         if response.get("status") != "ok":
             raise RuntimeError(response.get("message"))
 

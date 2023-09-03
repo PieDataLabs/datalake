@@ -91,7 +91,7 @@ class Dataset(object):
                                                     for im in images],
                                             annotations=[ann.to_dict()
                                                          for ann in annotations],
-                                            search_limit=search_limit,
+                                            knum=search_limit,
                                             dataset_id=self.dataset_id)
         if response.get("status") != "ok":
             raise RuntimeError(response.get("message"))
@@ -115,7 +115,7 @@ class Dataset(object):
                                             embedding=embedding.tolist(),
                                             annotations=[ann.to_dict()
                                                          for ann in annotations],
-                                            search_limit=search_limit,
+                                            knum=search_limit,
                                             dataset_id=self.dataset_id)
         if response.get("status") != "ok":
             raise RuntimeError(response.get("message"))
