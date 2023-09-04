@@ -6,7 +6,7 @@ from imantics import Annotation
 
 from .data_request import DataRequest
 from .annotations import AnnotationSearch, ImageWithAnnotations
-from .settings import FEATURE_DIMENSION
+from .settings import FEATURE_DIMENSION, FREEMIUM_SEARCH_LIMIT
 from .utils import to_base64
 
 
@@ -76,14 +76,14 @@ class Dataset(object):
     def search(self, query,
                images: List[Image.Image] = None,
                annotations: List[AnnotationSearch] = None,
-               search_limit=9) -> DataRequest:
+               search_limit=FREEMIUM_SEARCH_LIMIT) -> DataRequest:
         if images is None:
             images = []
         if annotations is None:
             annotations = []
 
-        if search_limit >= 10:
-            raise NotImplementedError("Now free search limit is 10 photos")
+        if search_limit >= FREEMIUM_SEARCH_LIMIT:
+            raise NotImplementedError(f"Now free search limit is {FREEMIUM_SEARCH_LIMIT} photos")
 
         response = self.searcher.pierequest("/search",
                                             query=query,
@@ -100,7 +100,7 @@ class Dataset(object):
 
     def deepsearch(self, embedding: np.ndarray,
                    annotations: List[AnnotationSearch] = None,
-                   search_limit=9):
+                   search_limit=FREEMIUM_SEARCH_LIMIT):
 
         if annotations is None:
             annotations = []
@@ -108,8 +108,8 @@ class Dataset(object):
         if embedding.shape != (FEATURE_DIMENSION, ):
             raise RuntimeError("Bad embedding shape")
 
-        if search_limit >= 10:
-            raise NotImplementedError("Now free search limit is 10 photos")
+        if search_limit >= FREEMIUM_SEARCH_LIMIT:
+            raise NotImplementedError(f"Now free search limit is {FREEMIUM_SEARCH_LIMIT} photos")
 
         response = self.searcher.pierequest("/deepsearch",
                                             embedding=embedding.tolist(),

@@ -7,7 +7,7 @@ from .limits import Limits
 from .annotations import AnnotationSearch
 from .data_request import DataRequest
 from .dataset import Dataset
-from .settings import FEATURE_DIMENSION
+from .settings import FEATURE_DIMENSION, FREEMIUM_SEARCH_LIMIT
 from .utils import to_base64, from_url
 
 
@@ -70,14 +70,14 @@ class Searcher(object):
     def search(self, query,
                images: List[Image.Image] = None,
                annotations: List[AnnotationSearch] = None,
-               search_limit=10) -> DataRequest:
+               search_limit=FREEMIUM_SEARCH_LIMIT) -> DataRequest:
         if images is None:
             images = []
         if annotations is None:
             annotations = []
 
-        if search_limit >= 10:
-            raise NotImplementedError("Now free search limit is 10 photos")
+        if search_limit >= FREEMIUM_SEARCH_LIMIT:
+            raise NotImplementedError(f"Now free search limit is {FREEMIUM_SEARCH_LIMIT} photos")
 
         response = self.pierequest("/search",
                                    query=query,
@@ -94,14 +94,19 @@ class Searcher(object):
     def search_similar(self,
                        request_id,
                        data_ids: List[int] = None,
-                       search_limit=10) -> DataRequest:
+                       dataset_id=None,
+                       search_limit=FREEMIUM_SEARCH_LIMIT) -> DataRequest:
 
         if data_ids is None:
             data_ids = []
 
+        if search_limit >= FREEMIUM_SEARCH_LIMIT:
+            raise NotImplementedError(f"Now free search limit is {FREEMIUM_SEARCH_LIMIT} photos")
+
         response = self.pierequest("/search_similar",
                                    request_id=request_id,
                                    data_ids=data_ids,
+                                   dataset_id=dataset_id,
                                    knum=search_limit)
         if response.get("status") != "ok":
             raise RuntimeError(response.get("message"))
@@ -110,7 +115,7 @@ class Searcher(object):
 
     def deepsearch(self, embedding: np.ndarray,
                    annotations: List[AnnotationSearch] = None,
-                   search_limit=10) -> DataRequest:
+                   search_limit=FREEMIUM_SEARCH_LIMIT) -> DataRequest:
 
         if annotations is None:
             annotations = []
@@ -118,8 +123,8 @@ class Searcher(object):
         if embedding.shape != (FEATURE_DIMENSION, ):
             raise RuntimeError("Bad embedding shape")
 
-        if search_limit >= 10:
-            raise NotImplementedError("Now free search limit is 10 photos")
+        if search_limit >= FREEMIUM_SEARCH_LIMIT:
+            raise NotImplementedError(f"Now free search limit is {FREEMIUM_SEARCH_LIMIT} photos")
 
         response = self.pierequest("/deepsearch",
                                    embedding=embedding.tolist(),

@@ -1,5 +1,9 @@
 import os
 from time import sleep
+from typing import Optional, Union, TYPE_CHECKING
+if TYPE_CHECKING:
+    from .dataset import Dataset
+from .settings import FREEMIUM_SEARCH_LIMIT
 
 
 class DataRequest(object):
@@ -26,7 +30,9 @@ class DataRequest(object):
             sleep(wait_time)
 
     def similar(self, data_ids,
-                search_limit=9) -> 'DataRequest':
+                dataset: Optional[Dataset] = None,
+                search_limit=FREEMIUM_SEARCH_LIMIT) -> 'DataRequest':
         return self.searcher.search_similar(self.request_id,
                                             data_ids,
+                                            dataset_id=None if dataset is None else dataset.dataset_id,
                                             search_limit=search_limit)
