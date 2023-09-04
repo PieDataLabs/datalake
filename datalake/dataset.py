@@ -19,7 +19,13 @@ class Dataset(object):
 
     def add(self,
             data_request: DataRequest,
-            ids: List[int]):
+            ids: List[int] = None,
+            exclude_ids: List[int] = None):
+        if ids is None:
+            ids = list(range(len(data_request.retrieve())))
+        if exclude_ids is None:
+            exclude_ids = []
+        ids = list(set(ids) - set(exclude_ids))
         self.searcher.dataset_add(self.dataset_id,
                                   data_request.request_id,
                                   data_ids=ids)
