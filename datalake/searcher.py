@@ -104,7 +104,7 @@ class Searcher(object):
         if data_ids is None:
             data_ids = []
 
-        if search_limit > FREEMIUM_SEARCH_LIMIT:
+        if dataset_id is None and search_limit > FREEMIUM_SEARCH_LIMIT:
             raise NotImplementedError(f"Now free search limit is {FREEMIUM_SEARCH_LIMIT} photos")
 
         response = self.pierequest("/search_similar",

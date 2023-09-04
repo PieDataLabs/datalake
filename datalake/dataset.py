@@ -82,7 +82,7 @@ class Dataset(object):
         if annotations is None:
             annotations = []
 
-        if search_limit > FREEMIUM_SEARCH_LIMIT:
+        if self.dataset_id is None and search_limit > FREEMIUM_SEARCH_LIMIT:
             raise NotImplementedError(f"Now free search limit is {FREEMIUM_SEARCH_LIMIT} photos")
 
         response = self.searcher.pierequest("/search",
@@ -112,7 +112,7 @@ class Dataset(object):
         if embedding.shape != (FEATURE_DIMENSION, ):
             raise RuntimeError("Bad embedding shape")
 
-        if search_limit > FREEMIUM_SEARCH_LIMIT:
+        if self.dataset_id is None and search_limit > FREEMIUM_SEARCH_LIMIT:
             raise NotImplementedError(f"Now free search limit is {FREEMIUM_SEARCH_LIMIT} photos")
 
         response = self.searcher.pierequest("/deepsearch",
