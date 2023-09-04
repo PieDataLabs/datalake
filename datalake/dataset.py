@@ -31,6 +31,20 @@ class Dataset(object):
                                   data_ids=ids)
         return self
 
+    def remove(self,
+               data_request: DataRequest,
+               ids: List[int] = None,
+               exclude_ids: List[int] = None):
+        if ids is None:
+            ids = list(range(len(data_request.retrieve())))
+        if exclude_ids is None:
+            exclude_ids = []
+        ids = list(set(ids) - set(exclude_ids))
+        self.searcher.dataset_remove(self.dataset_id,
+                                     data_request.request_id,
+                                     data_ids=ids)
+        return self
+
     def count(self):
         return self.searcher.dataset_info(self.dataset_id).get("images_count", 0)
 

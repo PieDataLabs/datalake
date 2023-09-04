@@ -177,5 +177,18 @@ class Searcher(object):
 
         return response
 
+    def dataset_remove(self, dataset_id: str,
+                       request_id: str,
+                       data_ids: List[int]):
+        response = self.pierequest("/remove_from_dataset",
+                                   dataset_id=dataset_id,
+                                   request_id=request_id,
+                                   data_ids=data_ids)
+
+        if response.get("status") != "ok":
+            raise RuntimeError(response.get("message"))
+
+        return response
+
     def get_embedding(self, image_url):
         raise NotImplementedError()
