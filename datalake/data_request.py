@@ -30,7 +30,7 @@ class DataRequest(object):
             sleep(wait_time)
 
     def similar(self, data_ids,
-                dataset: Optional[Dataset] = None,
+                dataset: Optional['Dataset'] = None,
                 search_limit=FREEMIUM_SEARCH_LIMIT) -> 'DataRequest':
         return self.searcher.search_similar(self.request_id,
                                             data_ids,
