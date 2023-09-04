@@ -36,7 +36,7 @@ class Dataset(object):
 
     def __repr__(self):
         info = self.searcher.dataset_info(self.dataset_id)
-        return f"Dataset#{info['keyname']}(images={info['images_count']}, annotations={info['annotations_count']}, public={info['public']})"
+        return f"Dataset#{info['keyname']}(images={info['images_count']}, annotations={info['annotations_count']}, public={info['public']}, indexed={info['n_images_has_index']})"
 
     def add_image(self,
                   image_or_image_url: Union[str, Image.Image],
@@ -96,7 +96,7 @@ class Dataset(object):
         if response.get("status") != "ok":
             raise RuntimeError(response.get("message"))
 
-        return DataRequest(self, response.get("request_id"))
+        return DataRequest(self.searcher, response.get("request_id"))
 
     def deepsearch(self, embedding: np.ndarray,
                    annotations: List[AnnotationSearch] = None,
@@ -120,4 +120,4 @@ class Dataset(object):
         if response.get("status") != "ok":
             raise RuntimeError(response.get("message"))
 
-        return DataRequest(self, response.get("request_id"))
+        return DataRequest(self.searcher, response.get("request_id"))
