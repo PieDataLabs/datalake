@@ -5,3 +5,4 @@ parse
 opencv_contrib_python
 imantics
 requests
+tqdm

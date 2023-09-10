@@ -1,6 +1,8 @@
 import os
 from typing import List, Union
+import math
 from PIL import Image
+from tqdm import tqdm
 import numpy as np
 from imantics import Annotation
 
@@ -81,6 +83,14 @@ class Dataset(object):
                                             image_url=image_url)
         if response.get("status") != "ok":
             raise RuntimeError(response.get("message"))
+
+    def clear(self):
+        nPages = math.ceil(self.count() / 10)
+        for page in tqdm(range(nPages)):
+            page = nPages - page - 1
+            data = self.retrieve(page)
+            for obj in data:
+                self.remove_image(obj['image_url'])
 
     def retrieve(self, page=0):
         response = self.searcher.pierequest("/retrieve_from_dataset",
