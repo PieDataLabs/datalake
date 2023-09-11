@@ -186,6 +186,15 @@ class Searcher(object):
 
         return response
 
+    def dataset_drop(self, dataset_id: str):
+        response = self.pierequest("/drop_dataset",
+                                   dataset_id=dataset_id)
+
+        if response.get("status") != "ok":
+            raise RuntimeError(response.get("message"))
+
+        return response
+
     def dataset_remove(self, dataset_id: str,
                        request_id: str,
                        data_ids: List[int]):

@@ -26,6 +26,9 @@ class Dataset(object):
         return Dataset(searcher,
                        dataset_id=dataset_id)
 
+    def drop(self):
+        self.searcher.dataset_drop(self.dataset_id)
+
     def add(self,
             data_request: DataRequest,
             ids: List[int] = None,
