@@ -1,5 +1,5 @@
 import os
-from typing import List, Union
+from typing import List, Union, Callable, Dict, Any
 import math
 from PIL import Image
 from tqdm import tqdm
@@ -189,3 +189,23 @@ class Dataset(object):
         if isinstance(index, slice):
             return self[list(range(index.start, index.stop, index.step))]
         raise NotImplementedError("index must be only slice, list or int")
+
+    def filter(self, fn: Callable[[Dict[str, Any]], bool],
+               suffix: str = "filtered"):
+        info = self.searcher.dataset_info(self.dataset_id)
+        name = info["name"] + "/" + suffix
+        new_ds = Dataset.new(self.searcher, name)
+        for obj in iter(self):
+            if fn(obj):
+                new_ds.add_image(obj['image_url'], obj["annotations"])
+        return new_ds
+
+    def map(self, fn: Callable[[Dict[str, Any]], Dict[str, Any]],
+            suffix: str = "mapped"):
+        info = self.searcher.dataset_info(self.dataset_id)
+        name = info["name"] + "/" + suffix
+        new_ds = Dataset.new(self.searcher, name)
+        for obj in iter(self):
+            new_obj = fn(obj)
+            new_ds.add_image(new_obj['image_url'], new_obj["annotations"])
+        return new_ds
