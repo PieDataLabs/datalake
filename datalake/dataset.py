@@ -8,7 +8,7 @@ from imantics import Annotation
 
 from .data_request import DataRequest
 from .annotations import AnnotationSearch, ImageWithAnnotations
-from .settings import FEATURE_DIMENSION, FREEMIUM_SEARCH_LIMIT
+from .settings import FEATURE_DIMENSION, FREEMIUM_SEARCH_LIMIT, PAGE_SIZE
 from .utils import to_base64
 
 
@@ -155,3 +155,35 @@ class Dataset(object):
             raise RuntimeError(response.get("message"))
 
         return DataRequest(self.searcher, response.get("request_id"))
+
+    def __iter__(self):
+        n_pages = math.ceil(self.count() / PAGE_SIZE)
+        for page in range(n_pages):
+            for obj in self.retrieve(page):
+                yield obj
+
+    def __len__(self):
+        return self.count()
+
+    def __getitem__(self, index):
+        if isinstance(index, int):
+            page = index // PAGE_SIZE
+            page_index = index - PAGE_SIZE * page
+            return self.retrieve(page)[page_index]
+        if isinstance(index, list):
+            pages = set(map(lambda idx: idx // PAGE_SIZE, index))
+            pages_data = {page: self.retrieve(page)
+                          for page in pages}
+            return [pages_data[idx // PAGE_SIZE][idx - PAGE_SIZE * (idx // PAGE_SIZE)]
+                    for idx in index]
+        if isinstance(index, slice):
+            return self[list(range(index.indices(self.count())))]
+        raise NotImplementedError("index must be only slice, list or int")
+
+    """
+    def map(self, fn):
+        return map(fn, iter(self))
+
+    def filter(self, fn):
+        return filter(fn, iter(self))
+    """
