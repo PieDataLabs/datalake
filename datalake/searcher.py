@@ -177,6 +177,15 @@ class Searcher(object):
 
         return response
 
+    def dataset_new(self, name=None):
+        response = self.pierequest("/new_dataset",
+                                   name=name)
+
+        if response.get("status") != "ok":
+            raise RuntimeError(response.get("message"))
+
+        return response
+
     def dataset_remove(self, dataset_id: str,
                        request_id: str,
                        data_ids: List[int]):

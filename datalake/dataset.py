@@ -19,6 +19,13 @@ class Dataset(object):
         self.searcher = searcher
         self.dataset_id = dataset_id
 
+    @staticmethod
+    def new(searcher,
+            name=None) -> 'Dataset':
+        dataset_id = searcher.dataset_new(name=name)["dataset_id"]
+        return Dataset(searcher,
+                       dataset_id=dataset_id)
+
     def add(self,
             data_request: DataRequest,
             ids: List[int] = None,
@@ -177,13 +184,5 @@ class Dataset(object):
             return [pages_data[idx // PAGE_SIZE][idx - PAGE_SIZE * (idx // PAGE_SIZE)]
                     for idx in index]
         if isinstance(index, slice):
-            return self[list(range(index.indices(self.count())))]
+            return self[list(range(index.start, index.stop, index.step))]
         raise NotImplementedError("index must be only slice, list or int")
-
-    """
-    def map(self, fn):
-        return map(fn, iter(self))
-
-    def filter(self, fn):
-        return filter(fn, iter(self))
-    """

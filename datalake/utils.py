@@ -2,9 +2,10 @@ import base64
 import io
 import requests
 from PIL import Image
+from typing import Optional
 
 
-def to_base64(im: Image.Image):
+def to_base64(im: Image.Image) -> str:
     file_object = io.BytesIO()
     im.save(file_object, 'JPEG')
     file_object.seek(0)
@@ -13,9 +14,8 @@ def to_base64(im: Image.Image):
     return src
 
 
-def from_url(image_url: str):
+def from_url(image_url: str) -> Optional[Image.Image]:
     image_url = image_url.split('?')[0]
-    print(image_url)
     r = requests.get(image_url, stream=True)
     if r.status_code == 200:
         return Image.open(io.BytesIO(r.content)).convert("RGB")
