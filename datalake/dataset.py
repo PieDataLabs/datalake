@@ -166,11 +166,22 @@ class Dataset(object):
 
         return DataRequest(self.searcher, response.get("request_id"))
 
-    def __iter__(self):
-        n_pages = math.ceil(self.count() / PAGE_SIZE)
+    def iter(self, progress=True):
+        n_images = self.count()
+        n_pages = math.ceil(n_images / PAGE_SIZE)
+
+        if progress:
+            pbar = iter(tqdm(range(n_images)))
+        else:
+            pbar = iter(range(n_images))
+
         for page in range(n_pages):
             for obj in self.retrieve(page):
+                next(pbar)
                 yield obj
+
+    def __iter__(self):
+        return self.iter()
 
     def __len__(self):
         return self.count()
@@ -191,21 +202,24 @@ class Dataset(object):
         raise NotImplementedError("index must be only slice, list or int")
 
     def filter(self, fn: Callable[[Dict[str, Any]], bool],
-               suffix: str = "filtered"):
+               suffix: str = "filtered",
+               progress=True):
         info = self.searcher.dataset_info(self.dataset_id)
         name = info["name"] + "/" + suffix
         new_ds = Dataset.new(self.searcher, name)
-        for obj in iter(self):
+        for obj in self.iter(progress=progress):
             if fn(obj):
-                new_ds.add_image(obj['image_url'], obj["annotations"])
+                new_ds.add_image(obj['image_url'],
+                                 annotations=obj["annotations"])
         return new_ds
 
     def map(self, fn: Callable[[Dict[str, Any]], Dict[str, Any]],
-            suffix: str = "mapped"):
+            suffix: str = "mapped",
+            progress=True):
         info = self.searcher.dataset_info(self.dataset_id)
         name = info["name"] + "/" + suffix
         new_ds = Dataset.new(self.searcher, name)
-        for obj in iter(self):
+        for obj in self.iter(progress=progress):
             new_obj = fn(obj)
             new_ds.add_image(new_obj['image_url'], new_obj["annotations"])
         return new_ds

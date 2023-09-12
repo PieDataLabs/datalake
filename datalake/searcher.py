@@ -1,4 +1,8 @@
 import requests
+from requests import Session
+from requests.adapters import HTTPAdapter
+from requests.packages.urllib3.util import Retry
+
 import json
 from PIL import Image
 from typing import List
@@ -12,24 +16,36 @@ from .utils import to_base64, from_url
 
 
 class Searcher(object):
-    def __init__(self, email, api_key):
+    def __init__(self, email, api_key,
+                 max_retries=3):
         self.email = email
         self.api_key = api_key
+        self.max_retries = max_retries
+
+        retries = Retry(
+            total=self.max_retries,
+            backoff_factor=1,
+            status_forcelist=[500, 502, 503, 504, 521],
+            allowed_methods=["POST"],
+        )
+        self.session = Session()
+        self.session.mount("https://",
+                           HTTPAdapter(max_retries=retries))
 
     def pierequest(self, endpoint, **data):
-        return requests.post("https://console.piedata.ai/api/process/proxy",
-                             files={
-                                 "piedemo__proxy": (None, json.dumps({
-                                     "project_id": "64b61f572e9765980a0640d3",
-                                     "direct": endpoint,
-                                     "method": "post",
-                                 })),
-                                 "__pie_json_data": (None, json.dumps({
-                                     "email": self.email,
-                                     "api_key": self.api_key,
-                                     **data
-                                 })),
-                             }).json()
+        return self.session.post("https://console.piedata.ai/api/process/proxy",
+                                 files={
+                                     "piedemo__proxy": (None, json.dumps({
+                                         "project_id": "64b61f572e9765980a0640d3",
+                                         "direct": endpoint,
+                                         "method": "post",
+                                     })),
+                                     "__pie_json_data": (None, json.dumps({
+                                         "email": self.email,
+                                         "api_key": self.api_key,
+                                         **data
+                                     })),
+                                 }).json()
 
     def limits(self):
         response = self.pierequest("/limits")
@@ -140,16 +156,18 @@ class Searcher(object):
 
         return DataRequest(self, response.get("request_id"))
 
-    def dataset_list(self):
-        response = self.pierequest("/dataset_list")
+    def dataset_list(self, prefix=""):
+        response = self.pierequest("/dataset_list",
+                                   prefix=prefix)
         if response.get("status") != "ok":
             raise RuntimeError(response.get("message"))
 
         return [Dataset(self, dataset_id)
                 for dataset_id in response.get("datasets", [])]
 
-    def dataset_shared_list(self):
-        response = self.pierequest("/dataset_shared_list")
+    def dataset_shared_list(self, prefix=""):
+        response = self.pierequest("/dataset_shared_list",
+                                   prefix=prefix)
         if response.get("status") != "ok":
             raise RuntimeError(response.get("message"))
 
