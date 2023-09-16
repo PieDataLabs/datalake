@@ -3,6 +3,7 @@ from typing import List, Union, Callable, Dict, Any
 import math
 from PIL import Image
 from tqdm import tqdm
+from parse import parse
 import numpy as np
 from imantics import Annotation
 
@@ -25,6 +26,61 @@ class Dataset(object):
         dataset_id = searcher.dataset_new(name=name)["dataset_id"]
         return Dataset(searcher,
                        dataset_id=dataset_id)
+
+    @staticmethod
+    def from_cvat(searcher, cvat_url, credentials, name=None):
+        ds = Dataset.new(searcher, name=name)
+        try:
+            ds.add_from_cvat(cvat_url, credentials=credentials)
+        except:
+            ds.drop()
+            raise
+        return ds
+
+    def add_from_cvat(self, cvat_url,
+                      credentials):
+        # TODO: add annotations from cvat
+        from cvat_sdk import make_client
+
+        if cvat_url.endswith("/"):
+            cvat_url = cvat_url[:-1]
+
+        parsed = parse("{host}/tasks/{task_id}/jobs/{job_id}",
+                       cvat_url)
+        if parsed is None:
+            parsed = parse("{host}/tasks/{task_id}",
+                           cvat_url)
+        if parsed is None:
+            raise RuntimeError("cvat_url must be in format: host/tasks/$task_id or host/tasks/$task_id/jobs/$job_id")
+
+        cvat_url = parsed.named.get("host")
+        task_id = parsed.named.get("task_id")
+        job_id = parsed.named.get("job_id")
+
+        try:
+            client = make_client(cvat_url,
+                                 credentials=credentials)
+        except:
+            raise RuntimeError("Bad credentials")
+
+        if job_id is not None:
+            cvat_container = client.jobs.retrieve(int(job_id))
+        elif task_id is not None:
+            cvat_container = client.tasks.retrieve(int(task_id))
+        else:
+            raise RuntimeError("Can't retrieve data by url")
+
+        i = 0
+        pbar = tqdm()
+        while True:
+            try:
+                frame = Image.open(cvat_container.get_frame(i, quality="original"))
+            except:
+                break
+            self.add_image(frame)
+            i += 1
+            pbar.update(1)
+        pbar.close()
 
     def drop(self):
         self.searcher.dataset_drop(self.dataset_id)
