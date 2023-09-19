@@ -174,18 +174,19 @@ class ImageWithAnnotations(object):
         self.annotations = annotations
 
     @staticmethod
-    def annotation_from_dict(d, size):
+    def annotation_from_dict(d, size,
+                             annotation_id: int = 0):
         pietype = d.pop('type')
         if 'box' in d:
-            d['bbox'] = BBox.create(np.int32(np.array(d.pop('bbox')) * np.array([size[0], size[1]] * 2)),
+            d['bbox'] = BBox.create(np.int32(np.array(d.pop('box')) * np.array([size[0], size[1]] * 2)),
                                     style=BBox.MIN_MAX)
-        if 'segmentation' in d:
-            polygons = [np.int32(poly.reshape([-1, 2]) * np.array([[size[0], size[1]]]))
-                        for poly in d.pop('segmentation')]
-            d["polygons"] = Polygons.create(polygons)
+        if 'setgmentation' in d:
+            d["polygons"] = Polygons([(np.int32(np.array(p) * np.repeat([size[0], size[1]], len(p) // 2)))
+                                      for p in d.pop('segmentation')])
+
         d["category"] = Category(d.pop('name'), color=d.pop('color'))
         return Annotation(**d,
-                          id=None,
+                          id=annotation_id,
                           width=size[0],
                           height=size[1],
                           metadata={
