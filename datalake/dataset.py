@@ -279,3 +279,13 @@ class Dataset(object):
             new_obj = fn(obj)
             new_ds.add_image(new_obj['image_url'], new_obj["annotations"])
         return new_ds
+
+    def nearest(self, image_or_image_url: Union[str, Image.Image]):
+        request = self.search("",
+                              images=[image_or_image_url],
+                              annotations=[],
+                              search_limit=1).wait()
+        return {
+            "image_url": request[0]["image_url"],
+            "score": request[0]["score"]
+        }
