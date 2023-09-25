@@ -289,3 +289,22 @@ class Dataset(object):
             "image_url": request[0]["image_url"],
             "score": request[0]["score"]
         }
+
+    def duplicates(self, th=0.9,
+                   progress=True):
+        groups = {}
+
+        def connect(i, j):
+            group_i = groups.get(i, frozenset({i}))
+            group_j = groups.get(j, frozenset({j}))
+            group = frozenset.union(group_i, group_j)
+            groups[i] = group
+            groups[j] = group
+
+        for data in self.iter(progress=progress):
+            image_url = data["image_url"]
+            nearest = self.nearest(image_url)
+            if nearest["score"] > th:
+                connect(image_url, nearest["image_url"])
+
+        return set(groups.values())
