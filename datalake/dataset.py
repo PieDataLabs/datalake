@@ -280,31 +280,42 @@ class Dataset(object):
             new_ds.add_image(new_obj['image_url'], new_obj["annotations"])
         return new_ds
 
-    def nearest(self, image_or_image_url: Union[str, Image.Image]):
+    def nearest_n(self, image_or_image_url: Union[str, Image.Image],
+                  n=5):
         request = self.search("",
                               images=[image_or_image_url],
                               annotations=[],
-                              search_limit=1).wait()
-        return {
-            "image_url": request[0]["image_url"],
-            "score": request[0]["score"]
-        }
+                              search_limit=n).wait(n=n)
+        return [{
+            "image_url": request[i]["image_url"],
+            "score": request[i]["score"]
+        } for i in range(len(request))]
+
+    def nearest(self, image_or_image_url: Union[str, Image.Image]):
+        return self.nearest_n(image_or_image_url, 1)[0]
 
     def duplicates(self, th=0.9,
-                   progress=True):
+                   progress=True,
+                   batch_size=10):
+        if batch_size <= 1:
+            raise RuntimeError("If batch_size == 1, nearest=self")
         groups = {}
 
         def connect(i, j):
+            if i == j:
+                return
             group_i = groups.get(i, frozenset({i}))
             group_j = groups.get(j, frozenset({j}))
             group = frozenset.union(group_i, group_j)
-            groups[i] = group
-            groups[j] = group
+            for k in group:
+                groups[k] = group
 
         for data in self.iter(progress=progress):
             image_url = data["image_url"]
-            nearest = self.nearest(image_url)
-            if nearest["score"] > th:
-                connect(image_url, nearest["image_url"])
+            nearest_list = self.nearest_n(image_url,
+                                          n=batch_size)
+            for nearest in nearest_list:
+                if nearest["score"] > th:
+                    connect(image_url, nearest["image_url"])
 
         return set(groups.values())
