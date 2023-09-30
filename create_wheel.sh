@@ -13,3 +13,10 @@ cp ./README.md ./package_data/
 cd package_data && python setup.py build_ext --inplace && python setup.py bdist_wheel
 cp ./dist/*.whl ../
 rm -rf ../package_data
+pwd
+cd ..
+
+pip uninstall -y piedatalake
+ls | grep .whl | xargs -I{} pip install {}
+ls | grep .whl | xargs -I{} cp {} ~/piedemo
+cd ~/piedemo/server && ./sync_code.sh

@@ -1,7 +1,10 @@
 import os
+import subprocess
+from multiprocessing import cpu_count
 from typing import List, Union, Callable, Dict, Any
 import math
 from PIL import Image
+from pathlib import Path
 from tqdm import tqdm
 from parse import parse
 import numpy as np
@@ -126,6 +129,10 @@ class Dataset(object):
         info = self.searcher.dataset_info(self.dataset_id)
         return f"Dataset#{info['keyname']}(images={info['images_count']}, annotations={info['annotations_count']}, public={info['public']}, indexed={info['n_images_has_index']})"
 
+    @property
+    def keyname(self):
+        return self.searcher.dataset_info(self.dataset_id)["keyname"]
+
     def add_image(self,
                   image_or_image_url: Union[str, Image.Image],
                   annotations=None):
@@ -166,8 +173,24 @@ class Dataset(object):
             raise RuntimeError(response.get("message"))
         return response.get("data", [])
 
-    def export(self, format=None):
-        raise NotImplementedError()
+    def export(self, output_path: Path,
+               format='csv'):
+        output_path = Path(output_path)
+        output_path.mkdir(parents=True, exist_ok=True)
+
+        if format == 'csv':
+            csv_path = output_path / f"{self.keyname}.csv"
+            with csv_path.open("w") as f:
+                f.write('\n'.join([obj['image_url']
+                                   for obj in self.iter(progress=True)]))
+            return csv_path
+        elif format == "images":
+            csv_path = self.export(output_path, format='csv')
+            os.system(f"cd {output_path} && cat {csv_path.name} | xargs -P{cpu_count()} -IIMAGE_URL wget 'IMAGE_URL'")
+            os.system(f"rm {csv_path}")
+            return output_path
+        else:
+            raise NotImplementedError()
 
     def search(self, query,
                images: List[Image.Image] = None,
