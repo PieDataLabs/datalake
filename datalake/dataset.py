@@ -14,6 +14,7 @@ from .data_request import DataRequest
 from .annotations import AnnotationSearch, ImageWithAnnotations
 from .settings import FEATURE_DIMENSION, FREEMIUM_SEARCH_LIMIT, PAGE_SIZE
 from .utils import to_base64
+from .integrations.cvat import CVATForImages
 
 
 class Dataset(object):
@@ -191,6 +192,19 @@ class Dataset(object):
             return output_path
         else:
             raise NotImplementedError()
+
+    def import_from(self, path: Path, format="cvat_for_images"):
+        if format == "cvat_for_images":
+            reader = CVATForImages(path)
+            for i in tqdm(range(len(reader))):
+                image, annotations = reader[i]
+                if max(image.size) > 2048:
+                    print(f"Image {i} larger than 2048")
+                    continue
+                self.add_image(image,
+                               annotations=annotations)
+        else:
+            raise NotImplementedError("This format does not supported")
 
     def search(self, query,
                images: List[Image.Image] = None,
