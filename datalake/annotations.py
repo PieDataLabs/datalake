@@ -180,7 +180,7 @@ class ImageWithAnnotations(object):
         if 'box' in d:
             d['bbox'] = BBox.create(np.int32(np.array(d.pop('box')) * np.array([size[0], size[1]] * 2)),
                                     style=BBox.MIN_MAX)
-        if 'setgmentation' in d:
+        if 'segmentation' in d:
             d["polygons"] = Polygons([(np.int32(np.array(p) * np.repeat([size[0], size[1]], len(p) // 2)))
                                       for p in d.pop('segmentation')])
 
