@@ -8,7 +8,7 @@ from PIL import Image
 import zipfile
 import io
 from tqdm import tqdm
-from xml.etree.ElementTree import parse
+from xml.etree.ElementTree import parse, ElementTree, SubElement, Element
 from imantics import Annotation, Category, BBox, Polygons
 
 
@@ -73,3 +73,49 @@ class CVATForImages(object):
 
     def __len__(self):
         return len(self.keys)
+
+
+class CVATForImagesWriter(object):
+    def __init__(self, path):
+        self.path = path
+        self.n_images = 0
+        self.root = Element("xml")
+
+    def write(self, image, annotations=None, key=None):
+        if key is None:
+            key = str(self.n_images)
+        if annotations is None:
+            annotations = []
+        buf = io.BytesIO()
+        image.save(buf, "JPEG")
+        buf.seek(0)
+        image_el = SubElement(self.root,
+                         "image",
+                        {"name": f"{self.n_images}.jpg",
+                               "width": str(image.size[0]),
+                               "height": str(image.size[1])})
+        for ann in annotations:
+            if ann.metadata.get("pietype") == "Box":
+                ann_el = SubElement(image_el,
+                                    "box",
+                                    {
+                                        "xtl": str(ann.bbox.bbox()[0]),
+                                        "ytl": str(ann.bbox.bbox()[1]),
+                                        "xbr": str(ann.bbox.bbox()[2]),
+                                        "ybr": str(ann.bbox.bbox()[3]),
+                                        "label": ann.category.name,
+                                    })
+            else:
+                print(ann.metadata)
+                raise
+
+        with zipfile.ZipFile(self.path, 'a') as zf:
+            zf.writestr(f"{self.n_images}.jpg",
+                        buf.getvalue())
+            xml_content_file = io.BytesIO()
+            ElementTree(self.root).write(xml_content_file)
+            xml_content_file.seek(0)
+            zf.writestr("annotations.xml",
+                        xml_content_file.getvalue())
+
+        self.n_images += 1
