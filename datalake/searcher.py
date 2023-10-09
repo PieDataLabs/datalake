@@ -213,6 +213,24 @@ class Searcher(object):
 
         return response
 
+    def dataset_make_public(self, dataset_id: str):
+        response = self.pierequest("/make_public",
+                                   dataset_id=dataset_id)
+
+        if response.get("status") != "ok":
+            raise RuntimeError(response.get("message"))
+
+        return response
+
+    def dataset_make_private(self, dataset_id: str):
+        response = self.pierequest("/make_private",
+                                   dataset_id=dataset_id)
+
+        if response.get("status") != "ok":
+            raise RuntimeError(response.get("message"))
+
+        return response
+
     def dataset_remove(self, dataset_id: str,
                        request_id: str,
                        data_ids: List[int]):

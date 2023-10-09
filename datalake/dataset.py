@@ -3,6 +3,7 @@ import subprocess
 from multiprocessing import cpu_count
 from typing import List, Union, Callable, Dict, Any
 import math
+import urllib.parse
 from PIL import Image
 from pathlib import Path
 from tqdm import tqdm
@@ -356,3 +357,11 @@ class Dataset(object):
                     connect(image_url, nearest["image_url"])
 
         return set(groups.values())
+
+    def make_public(self):
+        self.searcher.dataset_make_public(self.dataset_id)
+        action = "/invite?dataset_id=%s" % self.dataset_id
+        return f"https://console.piedata.ai/proxy?project_id=64b61f572e9765980a0640d3&action={urllib.parse.quote(action)}"
+
+    def make_private(self):
+        self.searcher.dataset_make_private(self.dataset_id)
