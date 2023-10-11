@@ -4,6 +4,7 @@ from typing import Optional, Union, TYPE_CHECKING
 if TYPE_CHECKING:
     from .dataset import Dataset
 from .settings import FREEMIUM_SEARCH_LIMIT
+import ipyplot
 
 
 class DataRequest(object):
@@ -36,3 +37,8 @@ class DataRequest(object):
                                             data_ids,
                                             dataset_id=None if dataset is None else dataset.dataset_id,
                                             search_limit=search_limit)
+
+    def make_igrid(self):
+        data = self.retrieve()
+        return ipyplot.plot_images([obj['image_url'] for obj in data],
+                                   img_width=150)
