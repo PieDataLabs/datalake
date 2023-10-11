@@ -4,6 +4,7 @@ from multiprocessing import cpu_count
 from typing import List, Union, Callable, Dict, Any
 import math
 import urllib.parse
+from imantics.color import Color
 from PIL import Image
 from pathlib import Path
 from tqdm import tqdm
@@ -14,7 +15,7 @@ from imantics import Annotation
 from .data_request import DataRequest
 from .annotations import AnnotationSearch, ImageWithAnnotations
 from .settings import FEATURE_DIMENSION, FREEMIUM_SEARCH_LIMIT, PAGE_SIZE
-from .utils import to_base64
+from .utils import to_base64, from_url
 from .integrations.cvat import CVATForImages
 
 
@@ -191,10 +192,36 @@ class Dataset(object):
             os.system(f"cd {output_path} && cat {csv_path.name} | xargs -P{cpu_count()} -IIMAGE_URL wget 'IMAGE_URL'")
             os.system(f"rm {csv_path}")
             return output_path
+        elif format == "segmentation_masks":
+            classes = {}
+            for i, obj in enumerate(self.iter(progress=True)):
+                image_save_path = output_path / f"{i}.jpg"
+                mask_save_path = output_path / f"{i}_mask.png"
+
+                image_url = obj['image_url']
+                image = from_url(image_url)
+                if image is None:
+                    continue
+                image.save(image_save_path)
+                annotations = [ImageWithAnnotations.annotation_from_dict(ann, image.size,
+                                                                         annotation_id=i)
+                               for i, ann in enumerate(obj['annotations'])
+                               if ann['type'] == "Polygon"]
+                mask = np.zeros((image.size[1], image.size[0], 3), dtype=np.uint8)
+                for ann in annotations:
+                    label = ann.category.name
+                    if label not in classes:
+                        classes[label] = (len(classes), Color.random().rgb)
+                    idx, color = classes[label]
+                    mask[ann.polygons.mask(*image.size).array] = color
+                mask = Image.fromarray(mask)
+                mask.save(mask_save_path)
         else:
             raise NotImplementedError()
 
-    def import_from(self, path: Path, format="cvat_for_images"):
+    def import_from(self,
+                    path: Path,
+                    format="cvat_for_images"):
         if format == "cvat_for_images":
             reader = CVATForImages(path)
             for i in tqdm(range(len(reader))):
