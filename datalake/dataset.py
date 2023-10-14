@@ -11,6 +11,8 @@ from tqdm import tqdm
 from parse import parse
 import numpy as np
 from imantics import Annotation
+from imageio import get_reader
+from imageio.core.format import Format
 
 from .data_request import DataRequest
 from .annotations import AnnotationSearch, ImageWithAnnotations
@@ -231,6 +233,15 @@ class Dataset(object):
                     continue
                 self.add_image(image,
                                annotations=annotations)
+        elif format == "video":
+            reader: Format.Reader = get_reader(path)
+            meta = reader.get_meta_data()
+            fps = int(meta['fps'])
+            num_frames = int(meta['duration'] * meta['fps'])
+            for i, frame in enumerate(tqdm(reader, total=num_frames)):
+                frame = Image.fromarray(frame)
+                if i % fps == 0:
+                    self.add_image(frame)
         else:
             raise NotImplementedError("This format does not supported")
 
