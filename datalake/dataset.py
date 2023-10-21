@@ -16,6 +16,7 @@ from imageio.core.format import Format
 
 from .data_request import DataRequest
 from .annotations import AnnotationSearch, ImageWithAnnotations
+from .integrations.segmentation_masks import SegmentationMasks
 from .settings import FEATURE_DIMENSION, FREEMIUM_SEARCH_LIMIT, PAGE_SIZE
 from .utils import to_base64, from_url
 from .integrations.cvat import CVATForImages
@@ -226,6 +227,15 @@ class Dataset(object):
                     format="cvat_for_images"):
         if format == "cvat_for_images":
             reader = CVATForImages(path)
+            for i in tqdm(range(len(reader))):
+                image, annotations = reader[i]
+                if max(image.size) > 2048:
+                    print(f"Image {i} larger than 2048")
+                    continue
+                self.add_image(image,
+                               annotations=annotations)
+        elif format == "segmentation_masks":
+            reader = SegmentationMasks(path)
             for i in tqdm(range(len(reader))):
                 image, annotations = reader[i]
                 if max(image.size) > 2048:
