@@ -413,3 +413,20 @@ class Dataset(object):
 
     def make_private(self):
         self.searcher.dataset_make_private(self.dataset_id)
+
+    def get_tags(self):
+        response = self.searcher.pierequest("/get_tags",
+                                            dataset_id=self.dataset_id)
+
+        if response.get("status") != "ok":
+            raise RuntimeError(response.get("message"))
+        return response.get("tags", [])
+
+    def count_images_has_tag(self, tag):
+        response = self.searcher.pierequest("/count_images_has_tag",
+                                            dataset_id=self.dataset_id,
+                                            tag=tag)
+
+        if response.get("status") != "ok":
+            raise RuntimeError(response.get("message"))
+        return response.get("count", 0)
