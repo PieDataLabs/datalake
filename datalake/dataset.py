@@ -430,3 +430,7 @@ class Dataset(object):
         if response.get("status") != "ok":
             raise RuntimeError(response.get("message"))
         return response.get("count", 0)
+
+    def share_with_manot(self):
+        # TODO
+        pass
