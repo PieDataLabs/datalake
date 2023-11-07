@@ -1,5 +1,5 @@
 import re
-from imantics import Annotation, BBox, Mask, Polygons, Category
+from imantics import Annotation, BBox, Mask, Polygons, Category, Image as AImage
 from parse import parse
 import numpy as np
 from .utils import from_url
@@ -178,8 +178,9 @@ class ImageWithAnnotations(object):
                              annotation_id: int = 0):
         pietype = d.pop('type')
         if 'box' in d:
-            d['bbox'] = BBox.create(np.int32(np.array(d.pop('box')) * np.array([size[0], size[1]] * 2)),
-                                    style=BBox.MIN_MAX)
+            box = d.pop('box')
+            d['bbox'] = Polygons([np.int32(np.array(box) * np.repeat([size[0], size[1]], len(box) // 2))]).bbox()
+
         if 'segmentation' in d:
             d["polygons"] = Polygons([(np.int32(np.array(p) * np.repeat([size[0], size[1]], len(p) // 2)))
                                       for p in d.pop('segmentation')])
