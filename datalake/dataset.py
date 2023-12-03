@@ -206,7 +206,7 @@ class Dataset(object):
                 if image is None:
                     continue
                 image.save(image_save_path)
-                annotations = [ImageWithAnnotations.annotation_from_dict(ann, image.size,
+                annotations = [ImageWithAnnotations.annotation_from_dict(ann, image,
                                                                          annotation_id=i)
                                for i, ann in enumerate(obj['annotations'])
                                if ann['type'] == "Polygon"]

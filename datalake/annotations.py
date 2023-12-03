@@ -174,8 +174,9 @@ class ImageWithAnnotations(object):
         self.annotations = annotations
 
     @staticmethod
-    def annotation_from_dict(d, size,
+    def annotation_from_dict(d, image,
                              annotation_id: int = 0):
+        size = image.size
         pietype = d.pop('type')
         if 'box' in d:
             box = d.pop('box')
@@ -186,7 +187,9 @@ class ImageWithAnnotations(object):
                                       for p in d.pop('segmentation')])
 
         d["category"] = Category(d.pop('name'), color=d.pop('color'))
+
         return Annotation(**d,
+                          image=image,
                           id=annotation_id,
                           width=size[0],
                           height=size[1],
@@ -247,7 +250,7 @@ class ImageWithAnnotations(object):
             return ImageWithAnnotations(image_url=image_url)
 
         return ImageWithAnnotations(image,
-                                    [ImageWithAnnotations.annotation_from_dict(ann, image.size)
+                                    [ImageWithAnnotations.annotation_from_dict(ann, image)
                                      for ann in d["annotations"]],
                                     image_url=image_url)
 
